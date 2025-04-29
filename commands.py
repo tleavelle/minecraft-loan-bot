@@ -4,6 +4,7 @@ from config import OWNER_ID, ALLOWED_CHANNELS
 from igns import load_igns
 from users import link_user, get_user_ign
 from loans import apply_for_loan, repay_loan, get_loan_status
+from logger import log_transaction  # 🆕 Add logger import
 
 igns_set = set(load_igns())
 
@@ -39,8 +40,17 @@ def setup_commands(bot):
             await ctx.send("❌ Invalid loan amount.")
             return
 
-        result = apply_for_loan(mc_ign, amount)
-        await ctx.send(result)
+        summary, agreement_path, due_date = apply_for_loan(mc_ign, amount)
+        await ctx.send(summary)
+
+        # 🆕 Log transaction
+        await log_transaction(bot, "Loan Applied", ctx.author, f"{mc_ign} borrowed {amount} diamonds. Due {due_date}.")
+
+        if agreement_path:
+            try:
+                await ctx.author.send("📄 Here's your loan agreement:", file=discord.File(agreement_path))
+            except discord.Forbidden:
+                await ctx.send("⚠️ Could not send loan agreement via DM. Please enable DMs or contact the Vaultkeeper.")
 
     @bot.command(name="repay")
     async def repay(ctx, loan_id: int, amount: float):
@@ -55,6 +65,9 @@ def setup_commands(bot):
 
         result = repay_loan(mc_ign, loan_id, amount)
         await ctx.send(result)
+
+        # 🆕 Log transaction
+        await log_transaction(bot, "Repayment", ctx.author, f"{mc_ign} repaid {amount} diamonds toward Loan #{loan_id}.")
 
     @bot.command(name="status")
     async def status(ctx):
