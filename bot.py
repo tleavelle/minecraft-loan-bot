@@ -2,7 +2,7 @@
 
 import os
 import discord
-from discord.ext import commands
+from discord import Bot  # ✅ use the correct class for slash commands
 from config import DISCORD_TOKEN
 from db import initialize_db
 from commands import setup_commands
@@ -11,17 +11,17 @@ from commands import setup_commands
 os.makedirs("Loan Agreements", exist_ok=True)
 os.makedirs("logs", exist_ok=True)
 
-# Setup the bot
+# Setup the bot with slash command support
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix="!", intents=intents)
+bot = Bot(intents=intents)  # ✅ replaces commands.Bot
 
 @bot.event
 async def on_ready():
     print(f"🤖 Logged in as {bot.user}")
     initialize_db()
 
-# Register commands
+# Register slash commands
 setup_commands(bot)
 
 # Run the bot
