@@ -1,10 +1,15 @@
 # bot.py
 
+import os
 import discord
 from discord.ext import commands
 from config import DISCORD_TOKEN
 from db import initialize_db
 from commands import setup_commands
+
+# Ensure necessary folders exist
+os.makedirs("Loan Agreements", exist_ok=True)
+os.makedirs("logs", exist_ok=True)
 
 # Setup the bot
 intents = discord.Intents.default()
@@ -20,4 +25,7 @@ async def on_ready():
 setup_commands(bot)
 
 # Run the bot
-bot.run(DISCORD_TOKEN)
+try:
+    bot.run(DISCORD_TOKEN)
+except Exception as e:
+    print(f"Failed to start bot: {e}")
