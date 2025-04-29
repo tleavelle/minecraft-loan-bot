@@ -1,13 +1,14 @@
-# commands.py
-
 import discord
 from discord.ext import commands
-from config import OWNER_ID
+from config import OWNER_ID, ALLOWED_CHANNELS
 from igns import load_igns
 from users import link_user, get_user_ign
 from loans import apply_for_loan, repay_loan, get_loan_status
 
 igns_set = set(load_igns())
+
+def channel_guard(ctx):
+    return ctx.channel.id in ALLOWED_CHANNELS
 
 def setup_commands(bot):
 
@@ -16,6 +17,9 @@ def setup_commands(bot):
         if ctx.author.id != OWNER_ID:
             await ctx.send("🚫 You don’t have permission to use this command.")
             return
+        if not channel_guard(ctx):
+            await ctx.send("🚫 You can't use that command here.")
+            return
 
         ign = ign.strip()
         result = link_user(member.id, ign)
@@ -23,6 +27,10 @@ def setup_commands(bot):
 
     @bot.command(name="apply")
     async def apply(ctx, amount: int):
+        if not channel_guard(ctx):
+            await ctx.send("🚫 You can’t use that command here.")
+            return
+
         mc_ign = get_user_ign(ctx.author.id)
         if not mc_ign:
             await ctx.send("⚠️ You're not linked. Ask the admin to run `!linkuser` for you.")
@@ -36,6 +44,10 @@ def setup_commands(bot):
 
     @bot.command(name="repay")
     async def repay(ctx, loan_id: int, amount: float):
+        if not channel_guard(ctx):
+            await ctx.send("🚫 You can’t use that command here.")
+            return
+
         mc_ign = get_user_ign(ctx.author.id)
         if not mc_ign:
             await ctx.send("⚠️ You're not linked. Ask the admin to run `!linkuser` for you.")
@@ -46,6 +58,10 @@ def setup_commands(bot):
 
     @bot.command(name="status")
     async def status(ctx):
+        if not channel_guard(ctx):
+            await ctx.send("🚫 You can’t use that command here.")
+            return
+
         mc_ign = get_user_ign(ctx.author.id)
         if not mc_ign:
             await ctx.send("⚠️ You're not linked. Ask the admin to run `!linkuser` for you.")
@@ -65,7 +81,7 @@ def setup_commands(bot):
 `!apply <amount>` – Request a diamond loan
 `!repay <loan_id> <amount>` – Repay a loan
 `!status` – View your active loans
-`!myid` – Get your Discord ID
+`!myid` – Get your Discord user ID
 
 🔒 Admin Only:
 `!linkuser @user <mc_ign>` – Link a Discord user to a Minecraft IGN
