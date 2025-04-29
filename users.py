@@ -2,6 +2,8 @@
 
 from db import get_connection
 from igns import load_igns
+from typing import Optional
+
 
 def link_user(discord_id: int, mc_ign: str) -> str:
     igns = load_igns()
@@ -23,7 +25,7 @@ def link_user(discord_id: int, mc_ign: str) -> str:
     conn.close()
     return f"✅ Linked <@{discord_id}> to `{mc_ign}` successfully."
 
-def get_user_ign(discord_id: int) -> str | None:
+def get_user_ign(discord_id: int) -> Optional[str]:
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT mc_ign FROM linked_users WHERE discord_id = ?", (str(discord_id),))
