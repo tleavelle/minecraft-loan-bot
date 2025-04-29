@@ -3,7 +3,7 @@ import os
 from datetime import datetime, timedelta
 from db import get_connection
 
-def apply_for_loan(mc_ign: str, amount: int) -> tuple[str, str]:
+def apply_for_loan(mc_ign: str, amount: int) -> tuple[str, str, str]:
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -12,7 +12,7 @@ def apply_for_loan(mc_ign: str, amount: int) -> tuple[str, str]:
 
     if current_total + amount > 128:
         conn.close()
-        return f"❌ Cannot loan {amount}. You can only borrow up to {128 - current_total} more diamonds.", None
+        return f"❌ Cannot loan {amount}. You can only borrow up to {128 - current_total} more diamonds.", None, None
 
     fee = amount * 0.05
     total_owed = math.ceil(amount + fee)
@@ -54,7 +54,8 @@ def apply_for_loan(mc_ign: str, amount: int) -> tuple[str, str]:
         file.write(agreement_text)
 
     conn.close()
-    return f"✅ Loan approved for `{mc_ign}`: {amount} diamonds (+ fee = {total_owed}). Due: {due_date}.", agreement_path
+    summary = f"✅ `{mc_ign}` has borrowed {amount} diamonds. Total owed: {total_owed} 💎. Due: {due_date}."
+    return summary, agreement_path, due_date
 
 def get_loan_status(mc_ign: str) -> str:
     conn = get_connection()
@@ -77,13 +78,13 @@ def repay_loan(mc_ign: str, loan_id: int, amount: float) -> str:
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT total_owed, amount_repaid FROM loans WHERE id = ? AND player_name = ?", (loan_id, mc_ign))
+    cursor.execute("SELECT total_owed, amount_repaid, due_date FROM loans WHERE id = ? AND player_name = ?", (loan_id, mc_ign))
     loan = cursor.fetchone()
     if not loan:
         conn.close()
         return "❌ Loan not found."
 
-    total_owed, repaid = loan
+    total_owed, repaid, due_date = loan
     remaining = total_owed - repaid
     if amount > remaining:
         conn.close()
@@ -105,7 +106,19 @@ def repay_loan(mc_ign: str, loan_id: int, amount: float) -> str:
         cursor.execute("DELETE FROM loans WHERE id = ?", (loan_id,))
         conn.commit()
         conn.close()
-        return f"✅ Payment recorded. Loan {loan_id} fully repaid and archived."
+        return f"✅ Loan #{loan_id} fully repaid and archived. You're free as a bat in the End!"
 
     conn.close()
-    return f"✅ Payment of {amount} diamonds applied to Loan {loan_id}."
+    return f"💸 Payment of {amount} diamonds received for Loan #{loan_id}.\nRemaining balance: {total - repaid:.2f} 💎. Due: {due_date}."
+
+def get_overdue_loans():
+    """Returns a list of (loan_id, player_name, due_date) for overdue loans."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    today = datetime.now().strftime("%Y-%m-%d")
+    cursor.execute("SELECT id, player_name, due_date FROM loans WHERE due_date < ?", (today,))
+    overdue_loans = cursor.fetchall()
+
+    conn.close()
+    return overdue_loans
