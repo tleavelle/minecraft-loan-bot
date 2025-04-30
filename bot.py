@@ -18,6 +18,9 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 tree = bot.tree  # used for slash commands
 
+# Register commands early
+setup_commands(bot)
+
 @bot.event
 async def on_ready():
     print(f"🤖 Logged in as {bot.user}")
