@@ -156,24 +156,28 @@ def setup_commands(bot: commands.Bot):
     if not any(cmd.name == "help" for cmd in tree.get_commands()):
         @tree.command(name="help", description="List available LoanBot commands")
         async def help(interaction: discord.Interaction):
-            embed = discord.Embed(
-                title="📖 LoanBot Commands",
-                color=discord.Color.blue(),
-                timestamp=datetime.now()
-            )
-            embed.add_field(name="👤 Member Commands", value="""
+            try:
+                embed = discord.Embed(
+                    title="📖 LoanBot Commands",
+                    color=discord.Color.blue(),
+                    timestamp=datetime.now()
+                )
+                embed.add_field(name="👤 Member Commands", value="""
 `/apply <amount>` – Request a diamond loan  
 `/repay <loan_id> <amount>` – Repay a loan  
 `/status` – View your active loans  
 `/myid` – Get your Discord user ID
 """, inline=False)
-            embed.add_field(name="🔒 Admin Commands", value="""
+                embed.add_field(name="🔒 Admin Commands", value="""
 `/linkuser @user <ign>` – Link a user to their IGN  
 `/unlinkuser @user` – Unlink a user from their IGN  
 `/loaninfo <loan_id>` – View specific loan details  
 `/checkoverdue` – Check for overdue loans
 """, inline=False)
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+            except Exception as e:
+                print(f"❌ Error in /help: {e}")
+                await interaction.response.send_message("⚠️ Unexpected error occurred while loading help.", ephemeral=True)
 
     print("🔍 Slash Commands Registered:")
     for cmd in tree.get_commands():
