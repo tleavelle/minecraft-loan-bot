@@ -7,15 +7,14 @@ from commands import setup_commands
 from loans import get_overdue_loans
 from logger import log_transaction
 
-# Ensure necessary folders exist
+# Ensure folders
 os.makedirs("Loan Agreements", exist_ok=True)
 os.makedirs("logs", exist_ok=True)
 
-# Setup the bot
+# Create bot
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
-tree = bot.tree
 
 @bot.event
 async def on_ready():
@@ -25,19 +24,17 @@ async def on_ready():
     try:
         guild = discord.Object(id=GUILD_ID)
 
-        # Clear all guild commands to prevent duplicates or conflicts
-        await tree.clear_commands(guild=guild)
-
-        # Register commands and sync to guild
+        # 🔥 Clear and register fresh
+        await bot.tree.clear_commands(guild=guild)
         setup_commands(bot)
-        synced = await tree.sync(guild=guild)
 
+        synced = await bot.tree.sync(guild=guild)
         print(f"✅ Synced {len(synced)} slash command(s) to guild {GUILD_ID}")
         for cmd in synced:
             print(f" - /{cmd.name}")
 
     except Exception as e:
-        print(f"❌ Failed to sync commands: {e}")
+        print(f"❌ Command sync failed: {e}")
 
     daily_overdue_check.start()
 
@@ -51,16 +48,9 @@ async def daily_overdue_check():
     for channel_id in ALLOWED_CHANNELS:
         channel = bot.get_channel(channel_id)
         if channel:
-            embed = discord.Embed(
-                title="📅 Daily Overdue Loan Check",
-                color=discord.Color.orange()
-            )
+            embed = discord.Embed(title="📅 Daily Overdue Loan Check", color=discord.Color.orange())
             for loan_id, player_name, due_date in overdue_loans:
-                embed.add_field(
-                    name=f"Loan #{loan_id}",
-                    value=f"Player: `{player_name}`\nDue: {due_date}",
-                    inline=False
-                )
+                embed.add_field(name=f"Loan #{loan_id}", value=f"Player: `{player_name}`\nDue: {due_date}", inline=False)
             await channel.send(embed=embed)
 
     for loan_id, player_name, due_date in overdue_loans:
