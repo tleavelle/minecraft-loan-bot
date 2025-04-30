@@ -26,26 +26,26 @@ async def on_ready():
     try:
         guild = discord.Object(id=GUILD_ID)
 
-        # 🔥 Remove all global commands to avoid stale data
+        # 🔥 Clear both global and guild commands
         await tree.clear_commands(guild=None)
+        await tree.clear_commands(guild=guild)
 
-        # ✅ Register commands again
+        # 🛠 Re-register fresh commands
         setup_commands(bot)
 
-        # ✅ Sync freshly to the guild
+        # 🔄 Sync only to the current guild for instant updates
         synced = await tree.sync(guild=guild)
-        print(f"✅ Synced {len(synced)} slash command(s) to guild {GUILD_ID}.")
+        print(f"✅ Wiped and re-synced {len(synced)} slash command(s) to guild {GUILD_ID}.")
     except Exception as e:
         print(f"❌ Failed to sync slash commands: {e}")
 
-    # Start daily overdue check loop
     daily_overdue_check.start()
 
 # Daily task that runs once every 24 hours
 @tasks.loop(hours=24)
 async def daily_overdue_check():
     await bot.wait_until_ready()
-    
+
     overdue_loans = get_overdue_loans()
     if not overdue_loans:
         return
