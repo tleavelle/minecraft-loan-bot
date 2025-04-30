@@ -18,17 +18,21 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 tree = bot.tree  # used for slash commands
 
-# Register commands early
-setup_commands(bot)
-
 @bot.event
 async def on_ready():
     print(f"🤖 Logged in as {bot.user}")
     initialize_db()
 
-    # Sync slash commands on startup
     try:
         guild = discord.Object(id=GUILD_ID)
+
+        # 🔥 Remove all global commands to avoid stale data
+        await tree.clear_commands(guild=None)
+
+        # ✅ Register commands again
+        setup_commands(bot)
+
+        # ✅ Sync freshly to the guild
         synced = await tree.sync(guild=guild)
         print(f"✅ Synced {len(synced)} slash command(s) to guild {GUILD_ID}.")
     except Exception as e:
