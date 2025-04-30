@@ -1,3 +1,5 @@
+# bot.py
+
 import os
 import discord
 from discord.ext import commands, tasks
@@ -7,14 +9,14 @@ from commands import setup_commands
 from loans import get_overdue_loans
 from logger import log_transaction
 
-# Ensure folders
+# Ensure necessary folders exist
 os.makedirs("Loan Agreements", exist_ok=True)
 os.makedirs("logs", exist_ok=True)
 
-# Create bot
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
+tree = bot.tree  # used for slash commands
 
 @bot.event
 async def on_ready():
@@ -24,17 +26,17 @@ async def on_ready():
     try:
         guild = discord.Object(id=GUILD_ID)
 
-        # 🔥 Clear and register fresh
-        await bot.tree.clear_commands(guild=guild)
+        # Wipe all slash commands registered to this guild
+        await tree.clear_commands(guild=guild)
+
+        # Register commands fresh
         setup_commands(bot)
 
-        synced = await bot.tree.sync(guild=guild)
-        print(f"✅ Synced {len(synced)} slash command(s) to guild {GUILD_ID}")
-        for cmd in synced:
-            print(f" - /{cmd.name}")
-
+        # Sync with guild for fast propagation
+        synced = await tree.sync(guild=guild)
+        print(f"✅ Synced {len(synced)} command(s) to guild {GUILD_ID}")
     except Exception as e:
-        print(f"❌ Command sync failed: {e}")
+        print(f"❌ Failed to register slash commands: {e}")
 
     daily_overdue_check.start()
 
