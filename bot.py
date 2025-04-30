@@ -1,7 +1,6 @@
 import os
 import discord
 from discord.ext import commands, tasks
-from discord import app_commands
 from config import DISCORD_TOKEN, ALLOWED_CHANNELS, GUILD_ID
 from db import initialize_db
 from commands import setup_commands
@@ -16,7 +15,7 @@ os.makedirs("logs", exist_ok=True)
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
-tree = bot.tree  # used for slash commands
+tree = bot.tree
 
 @bot.event
 async def on_ready():
@@ -26,16 +25,19 @@ async def on_ready():
     try:
         guild = discord.Object(id=GUILD_ID)
 
-        # 🛠 Register fresh commands *after* bot is fully ready
+        # Clear all guild commands to prevent duplicates or conflicts
         await tree.clear_commands(guild=guild)
+
+        # Register commands and sync to guild
         setup_commands(bot)
         synced = await tree.sync(guild=guild)
 
-        print(f"✅ Synced {len(synced)} commands to guild {GUILD_ID}")
+        print(f"✅ Synced {len(synced)} slash command(s) to guild {GUILD_ID}")
         for cmd in synced:
             print(f" - /{cmd.name}")
+
     except Exception as e:
-        print(f"❌ Command sync failed: {e}")
+        print(f"❌ Failed to sync commands: {e}")
 
     daily_overdue_check.start()
 

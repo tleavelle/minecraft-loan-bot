@@ -14,12 +14,12 @@ def channel_guard(interaction: discord.Interaction) -> bool:
     return interaction.channel_id in ALLOWED_CHANNELS
 
 def setup_commands(bot: commands.Bot):
-    print("🛠️ setup_commands() called.")
+    print("🛠️ Registering slash commands...")
     tree = bot.tree
 
-    if not any(cmd.name == "linkuser" for cmd in tree.get_commands()):
-        @tree.command(name="linkuser", description="Link a Discord user to a Minecraft IGN (Admin Only)")
-        async def linkuser(interaction: discord.Interaction, user: discord.Member, ign: str):
+    @tree.command(name="linkuser", description="Link a Discord user to a Minecraft IGN (Admin Only)")
+    async def linkuser_cmd(interaction: discord.Interaction, user: discord.Member, ign: str):
+        try:
             if interaction.user.id != OWNER_ID:
                 await interaction.response.send_message("🚫 You don’t have permission to use this command.", ephemeral=True)
                 return
@@ -28,19 +28,23 @@ def setup_commands(bot: commands.Bot):
                 return
             result = link_user(user.id, ign.strip())
             await interaction.response.send_message(result, ephemeral=True)
+        except Exception as e:
+            print(f"[linkuser] Error: {e}")
 
-    if not any(cmd.name == "unlinkuser" for cmd in tree.get_commands()):
-        @tree.command(name="unlinkuser", description="Unlink a Discord user from their IGN (Admin Only)")
-        async def unlinkuser(interaction: discord.Interaction, user: discord.Member):
+    @tree.command(name="unlinkuser", description="Unlink a Discord user from their IGN (Admin Only)")
+    async def unlinkuser_cmd(interaction: discord.Interaction, user: discord.Member):
+        try:
             if interaction.user.id != OWNER_ID:
                 await interaction.response.send_message("🚫 You don’t have permission to use this command.", ephemeral=True)
                 return
             result = unlink_user(user.id)
             await interaction.response.send_message(result, ephemeral=True)
+        except Exception as e:
+            print(f"[unlinkuser] Error: {e}")
 
-    if not any(cmd.name == "apply" for cmd in tree.get_commands()):
-        @tree.command(name="apply", description="Apply for a diamond loan")
-        async def apply(interaction: discord.Interaction, amount: int):
+    @tree.command(name="apply", description="Apply for a diamond loan")
+    async def apply_cmd(interaction: discord.Interaction, amount: int):
+        try:
             if not channel_guard(interaction):
                 await interaction.response.send_message("🚫 You can’t use that command here.", ephemeral=True)
                 return
@@ -68,10 +72,12 @@ def setup_commands(bot: commands.Bot):
                     await interaction.user.send("📄 Here's your loan agreement:", file=discord.File(agreement_path))
                 except discord.Forbidden:
                     await interaction.followup.send("⚠️ Could not send loan agreement via DM.", ephemeral=True)
+        except Exception as e:
+            print(f"[apply] Error: {e}")
 
-    if not any(cmd.name == "repay" for cmd in tree.get_commands()):
-        @tree.command(name="repay", description="Repay a loan")
-        async def repay(interaction: discord.Interaction, loan_id: int, amount: float):
+    @tree.command(name="repay", description="Repay a loan")
+    async def repay_cmd(interaction: discord.Interaction, loan_id: int, amount: float):
+        try:
             if not channel_guard(interaction):
                 await interaction.response.send_message("🚫 You can’t use that command here.", ephemeral=True)
                 return
@@ -88,10 +94,12 @@ def setup_commands(bot: commands.Bot):
             )
             await interaction.response.send_message(embed=embed)
             await log_transaction(bot, "Repayment", interaction.user, f"{mc_ign} repaid {amount} diamonds toward Loan #{loan_id}.")
+        except Exception as e:
+            print(f"[repay] Error: {e}")
 
-    if not any(cmd.name == "status" for cmd in tree.get_commands()):
-        @tree.command(name="status", description="View your active loans")
-        async def status(interaction: discord.Interaction):
+    @tree.command(name="status", description="View your active loans")
+    async def status_cmd(interaction: discord.Interaction):
+        try:
             if not channel_guard(interaction):
                 await interaction.response.send_message("🚫 You can’t use that command here.", ephemeral=True)
                 return
@@ -107,24 +115,30 @@ def setup_commands(bot: commands.Bot):
                 timestamp=datetime.now()
             )
             await interaction.response.send_message(embed=embed)
+        except Exception as e:
+            print(f"[status] Error: {e}")
 
-    if not any(cmd.name == "loaninfo" for cmd in tree.get_commands()):
-        @tree.command(name="loaninfo", description="Admin: Get info about a specific loan ID")
-        async def loaninfo(interaction: discord.Interaction, loan_id: int):
+    @tree.command(name="loaninfo", description="Admin: Get info about a specific loan ID")
+    async def loaninfo_cmd(interaction: discord.Interaction, loan_id: int):
+        try:
             if interaction.user.id != OWNER_ID:
                 await interaction.response.send_message("🚫 You don’t have permission to use this command.", ephemeral=True)
                 return
             result = get_loan_details_by_id(loan_id)
             await interaction.response.send_message(result, ephemeral=True)
+        except Exception as e:
+            print(f"[loaninfo] Error: {e}")
 
-    if not any(cmd.name == "myid" for cmd in tree.get_commands()):
-        @tree.command(name="myid", description="Get your Discord user ID")
-        async def myid(interaction: discord.Interaction):
+    @tree.command(name="myid", description="Get your Discord user ID")
+    async def myid_cmd(interaction: discord.Interaction):
+        try:
             await interaction.response.send_message(f"Your Discord ID is `{interaction.user.id}`", ephemeral=True)
+        except Exception as e:
+            print(f"[myid] Error: {e}")
 
-    if not any(cmd.name == "checkoverdue" for cmd in tree.get_commands()):
-        @tree.command(name="checkoverdue", description="Check for overdue loans (Admin Only)")
-        async def checkoverdue(interaction: discord.Interaction):
+    @tree.command(name="checkoverdue", description="Check for overdue loans (Admin Only)")
+    async def checkoverdue_cmd(interaction: discord.Interaction):
+        try:
             if not channel_guard(interaction):
                 await interaction.response.send_message("🚫 You can’t use that command here.", ephemeral=True)
                 return
@@ -152,33 +166,32 @@ def setup_commands(bot: commands.Bot):
             await interaction.response.send_message(embed=embed)
             for loan_id, player_name, due_date in overdue:
                 await log_transaction(bot, "Overdue Loan", interaction.user, f"Loan #{loan_id} for {player_name} overdue since {due_date}.")
+        except Exception as e:
+            print(f"[checkoverdue] Error: {e}")
 
-    if not any(cmd.name == "help" for cmd in tree.get_commands()):
-        @tree.command(name="help", description="List available LoanBot commands")
-        async def help(interaction: discord.Interaction):
-            try:
-                embed = discord.Embed(
-                    title="📖 LoanBot Commands",
-                    color=discord.Color.blue(),
-                    timestamp=datetime.now()
-                )
-                embed.add_field(name="👤 Member Commands", value="""
+    @tree.command(name="help", description="List available LoanBot commands")
+    async def help_cmd(interaction: discord.Interaction):
+        try:
+            embed = discord.Embed(
+                title="📖 LoanBot Commands",
+                color=discord.Color.blue(),
+                timestamp=datetime.now()
+            )
+            embed.add_field(name="👤 Member Commands", value="""
 `/apply <amount>` – Request a diamond loan  
 `/repay <loan_id> <amount>` – Repay a loan  
 `/status` – View your active loans  
 `/myid` – Get your Discord user ID
 """, inline=False)
-                embed.add_field(name="🔒 Admin Commands", value="""
+            embed.add_field(name="🔒 Admin Commands", value="""
 `/linkuser @user <ign>` – Link a user to their IGN  
 `/unlinkuser @user` – Unlink a user from their IGN  
 `/loaninfo <loan_id>` – View specific loan details  
 `/checkoverdue` – Check for overdue loans
 """, inline=False)
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-            except Exception as e:
-                print(f"❌ Error in /help: {e}")
-                await interaction.response.send_message("⚠️ Unexpected error occurred while loading help.", ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        except Exception as e:
+            print(f"[help] Error: {e}")
+            await interaction.response.send_message("⚠️ Unexpected error occurred while loading help.", ephemeral=True)
 
-    print("🔍 Slash Commands Registered:")
-    for cmd in tree.get_commands():
-        print(f" - /{cmd.name}")
+    print("✅ All slash commands have been registered.")
