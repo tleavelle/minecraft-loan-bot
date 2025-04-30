@@ -26,29 +26,22 @@ async def on_ready():
     try:
         guild = discord.Object(id=GUILD_ID)
 
-        # 🔄 Ensure the tree is fully clear before re-registering
-        await tree.sync()  # global sync (ensures up-to-date state)
-        await tree.clear_commands(guild=guild)  # clear old guild commands
-
-        # 🛠 Register commands to the bot
+        # 🛠 Register fresh commands *after* bot is fully ready
+        await tree.clear_commands(guild=guild)
         setup_commands(bot)
-
-        # 📡 Re-sync the fresh set of commands to the guild
         synced = await tree.sync(guild=guild)
-        print(f"✅ Slash commands synced to guild {GUILD_ID}:")
+
+        print(f"✅ Synced {len(synced)} commands to guild {GUILD_ID}")
         for cmd in synced:
             print(f" - /{cmd.name}")
-
     except Exception as e:
-        print(f"❌ Failed to sync slash commands: {e}")
+        print(f"❌ Command sync failed: {e}")
 
     daily_overdue_check.start()
 
-# Daily task that runs once every 24 hours
 @tasks.loop(hours=24)
 async def daily_overdue_check():
     await bot.wait_until_ready()
-
     overdue_loans = get_overdue_loans()
     if not overdue_loans:
         return
@@ -71,20 +64,17 @@ async def daily_overdue_check():
     for loan_id, player_name, due_date in overdue_loans:
         await log_transaction(bot, "Daily Overdue Check", bot.user, f"Loan #{loan_id} overdue for {player_name} (due {due_date})")
 
-# Aligns the task start time to 9 AM server time
 @daily_overdue_check.before_loop
 async def before_daily_check():
     from datetime import datetime, timedelta
     import asyncio
-
     now = datetime.now()
     target = now.replace(hour=9, minute=0, second=0, microsecond=0)
     if now >= target:
         target += timedelta(days=1)
     await asyncio.sleep((target - now).total_seconds())
 
-# Run the bot
 try:
     bot.run(DISCORD_TOKEN)
 except Exception as e:
-    print(f"Failed to start bot: {e}")
+    print(f"❌ Bot failed to start: {e}")
