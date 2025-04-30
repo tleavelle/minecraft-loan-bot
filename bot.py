@@ -26,16 +26,19 @@ async def on_ready():
     try:
         guild = discord.Object(id=GUILD_ID)
 
-        # 🔥 Clear both global and guild commands
-        await tree.clear_commands(guild=None)
-        await tree.clear_commands(guild=guild)
+        # 🔄 Ensure the tree is fully clear before re-registering
+        await tree.sync()  # global sync (ensures up-to-date state)
+        await tree.clear_commands(guild=guild)  # clear old guild commands
 
-        # 🛠 Re-register fresh commands
+        # 🛠 Register commands to the bot
         setup_commands(bot)
 
-        # 🔄 Sync only to the current guild for instant updates
+        # 📡 Re-sync the fresh set of commands to the guild
         synced = await tree.sync(guild=guild)
-        print(f"✅ Wiped and re-synced {len(synced)} slash command(s) to guild {GUILD_ID}.")
+        print(f"✅ Slash commands synced to guild {GUILD_ID}:")
+        for cmd in synced:
+            print(f" - /{cmd.name}")
+
     except Exception as e:
         print(f"❌ Failed to sync slash commands: {e}")
 
