@@ -4,7 +4,6 @@ from db import get_connection
 from igns import load_igns
 from typing import Optional
 
-
 def link_user(discord_id: int, mc_ign: str) -> str:
     igns = load_igns()
     if mc_ign not in igns:
@@ -24,6 +23,25 @@ def link_user(discord_id: int, mc_ign: str) -> str:
     conn.commit()
     conn.close()
     return f"✅ Linked <@{discord_id}> to `{mc_ign}` successfully."
+
+
+def unlink_user(discord_id: int) -> str:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT mc_ign FROM linked_users WHERE discord_id = ?", (str(discord_id),))
+    row = cursor.fetchone()
+
+    if not row:
+        conn.close()
+        return "⚠️ This user is not linked to any IGN."
+
+    mc_ign = row[0]
+    cursor.execute("DELETE FROM linked_users WHERE discord_id = ?", (str(discord_id),))
+    conn.commit()
+    conn.close()
+
+    return f"✅ Unlinked <@{discord_id}> from `{mc_ign}`."
+    
 
 def get_user_ign(discord_id: int) -> Optional[str]:
     conn = get_connection()

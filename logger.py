@@ -1,5 +1,3 @@
-# logger.py
-
 import os
 import discord
 from datetime import datetime
@@ -32,6 +30,8 @@ async def log_transaction(bot, action: str, user: discord.User, details: str):
                     color=discord.Color.blue(),
                     timestamp=datetime.now()
                 )
+                embed.set_footer(text=f"Action: {action}")
                 await channel.send(embed=embed)
         except Exception as e:
             print(f"Failed to log to Discord channel: {e}")
+

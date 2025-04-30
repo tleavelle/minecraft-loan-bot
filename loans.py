@@ -3,7 +3,7 @@ import os
 from datetime import datetime, timedelta
 from db import get_connection
 
-def apply_for_loan(mc_ign: str, amount: int) -> tuple[str, str, str]:
+def apply_for_loan(mc_ign: str, amount: int) -> tuple[int | None, str, str | None, str | None]:
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -12,7 +12,7 @@ def apply_for_loan(mc_ign: str, amount: int) -> tuple[str, str, str]:
 
     if current_total + amount > 128:
         conn.close()
-        return f"❌ Cannot loan {amount}. You can only borrow up to {128 - current_total} more diamonds.", None, None
+        return None, f"❌ Cannot loan {amount}. You can only borrow up to {128 - current_total} more diamonds.", None, None
 
     fee = amount * 0.05
     total_owed = math.ceil(amount + fee)
@@ -55,7 +55,8 @@ def apply_for_loan(mc_ign: str, amount: int) -> tuple[str, str, str]:
 
     conn.close()
     summary = f"✅ `{mc_ign}` has borrowed {amount} diamonds. Total owed: {total_owed} 💎. Due: {due_date}."
-    return summary, agreement_path, due_date
+    return loan_id, summary, agreement_path, due_date
+
 
 def get_loan_status(mc_ign: str) -> str:
     conn = get_connection()
@@ -71,8 +72,16 @@ def get_loan_status(mc_ign: str) -> str:
     for i, loan in enumerate(loans, 1):
         loan_amt, repaid, total, due = loan
         remaining = total - repaid
-        msg += f"\n**Loan {i}:**\n"                f"> Principal: {loan_amt} 💎\n"                f"> Repaid: {repaid} 💎\n"                f"> Total Owed: {total} 💎\n"                f"> Remaining: {remaining:.2f} 💎\n"                f"> Due: {due}\n"
+        msg += (
+            f"\n**Loan {i}:**\n"
+            f"> Principal: {loan_amt} 💎\n"
+            f"> Repaid: {repaid} 💎\n"
+            f"> Total Owed: {total} 💎\n"
+            f"> Remaining: {remaining:.2f} 💎\n"
+            f"> Due: {due}\n"
+        )
     return msg
+
 
 def repay_loan(mc_ign: str, loan_id: int, amount: float) -> str:
     conn = get_connection()
@@ -86,6 +95,11 @@ def repay_loan(mc_ign: str, loan_id: int, amount: float) -> str:
 
     total_owed, repaid, due_date = loan
     remaining = total_owed - repaid
+
+    if remaining <= 0:
+        conn.close()
+        return f"✅ Loan #{loan_id} is already fully repaid."
+
     if amount > remaining:
         conn.close()
         return f"⚠️ You only owe {remaining:.2f} diamonds."
@@ -111,6 +125,7 @@ def repay_loan(mc_ign: str, loan_id: int, amount: float) -> str:
     conn.close()
     return f"💸 Payment of {amount} diamonds received for Loan #{loan_id}.\nRemaining balance: {total - repaid:.2f} 💎. Due: {due_date}."
 
+
 def get_overdue_loans():
     """Returns a list of (loan_id, player_name, due_date) for overdue loans."""
     conn = get_connection()
@@ -122,3 +137,31 @@ def get_overdue_loans():
 
     conn.close()
     return overdue_loans
+
+
+def get_loan_details_by_id(loan_id: int) -> str:
+    """Returns a formatted summary of a specific loan."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT player_name, loan_amount, fee, total_owed, amount_repaid, date_borrowed, due_date FROM loans WHERE id = ?", (loan_id,))
+    loan = cursor.fetchone()
+    conn.close()
+
+    if not loan:
+        return f"❌ Loan #{loan_id} not found."
+
+    player_name, principal, fee, total_owed, repaid, borrowed, due = loan
+    remaining = total_owed - repaid
+
+    return (
+        f"📄 **Loan #{loan_id}**\n"
+        f"> Player: `{player_name}`\n"
+        f"> Principal: {principal} 💎\n"
+        f"> Fee: {fee:.2f} 💎\n"
+        f"> Total Owed: {total_owed} 💎\n"
+        f"> Repaid: {repaid} 💎\n"
+        f"> Remaining: {remaining:.2f} 💎\n"
+        f"> Borrowed On: {borrowed}\n"
+        f"> Due: {due}"
+    )

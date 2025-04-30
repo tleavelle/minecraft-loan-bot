@@ -39,11 +39,15 @@ def setup_commands(bot: discord.Bot):
             await ctx.respond("❌ Invalid loan amount.", ephemeral=True)
             return
 
-        summary, agreement_path, due_date = apply_for_loan(mc_ign, amount)
+        loan_id, summary, agreement_path, due_date = apply_for_loan(mc_ign, amount)
+
+        if loan_id is None:
+            await ctx.respond(summary, ephemeral=True)
+            return
 
         embed = discord.Embed(
             title="✅ Loan Approved!",
-            description=summary,
+            description=f"**Loan ID:** `{loan_id}`\n{summary}",
             color=discord.Color.green(),
             timestamp=datetime.now()
         )
