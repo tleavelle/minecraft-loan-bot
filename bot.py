@@ -76,9 +76,6 @@ async def before_daily_check():
         target += timedelta(days=1)
     await asyncio.sleep((target - now).total_seconds())
 
-# Register commands
-setup_commands(bot)
-
 # Run the bot
 try:
     bot.run(DISCORD_TOKEN)
