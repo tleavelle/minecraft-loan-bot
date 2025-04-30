@@ -173,3 +173,7 @@ def setup_commands(bot: commands.Bot):
 `/checkoverdue` – Check for overdue loans
 """, inline=False)
             await interaction.response.send_message(embed=embed, ephemeral=True)
+            
+    print("🔍 Slash Commands Registered:")
+    for cmd in tree.get_commands():
+        print(f" - /{cmd.name}")
