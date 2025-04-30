@@ -2,7 +2,7 @@ import os
 import discord
 from discord.ext import commands, tasks
 from discord import app_commands
-from config import DISCORD_TOKEN, ALLOWED_CHANNELS
+from config import DISCORD_TOKEN, ALLOWED_CHANNELS, GUILD_ID
 from db import initialize_db
 from commands import setup_commands
 from loans import get_overdue_loans
@@ -28,8 +28,9 @@ async def on_ready():
 
     # Sync slash commands on startup
     try:
-        synced = await tree.sync()
-        print(f"✅ Synced {len(synced)} slash command(s).")
+        guild = discord.Object(id=GUILD_ID)
+        synced = await tree.sync(guild=guild)
+        print(f"✅ Synced {len(synced)} slash command(s) to guild {GUILD_ID}.")
     except Exception as e:
         print(f"❌ Failed to sync slash commands: {e}")
 
