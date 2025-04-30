@@ -14,6 +14,7 @@ def channel_guard(interaction: discord.Interaction) -> bool:
     return interaction.channel_id in ALLOWED_CHANNELS
 
 def setup_commands(bot: commands.Bot):
+    print("🛠️ setup_commands() called.")
     tree = bot.tree
 
     if not any(cmd.name == "linkuser" for cmd in tree.get_commands()):
@@ -173,7 +174,7 @@ def setup_commands(bot: commands.Bot):
 `/checkoverdue` – Check for overdue loans
 """, inline=False)
             await interaction.response.send_message(embed=embed, ephemeral=True)
-            
+
     print("🔍 Slash Commands Registered:")
     for cmd in tree.get_commands():
         print(f" - /{cmd.name}")
