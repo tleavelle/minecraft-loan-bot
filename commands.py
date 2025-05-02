@@ -204,3 +204,24 @@ def setup_commands(bot: commands.Bot):
         )
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
+
+        @tree.command(name="clearchat", description="(Admin) Clear all messages in the loan channel", guild=discord.Object(id=GUILD_ID))
+        async def clearchat(interaction: discord.Interaction):
+            if interaction.user.id != OWNER_ID:
+                await interaction.response.send_message("🚫 You don’t have permission to use this command.", ephemeral=True)
+                return
+
+            if interaction.channel_id != 1366677117051605084:
+                await interaction.response.send_message("⚠️ This command can only be used in the loan channel.", ephemeral=True)
+                return
+
+            await interaction.response.defer(ephemeral=True)
+
+            try:
+                deleted = await interaction.channel.purge(limit=100, bulk=True)
+                await interaction.followup.send(f"🧹 Cleared {len(deleted)} messages from this channel.", ephemeral=True)
+            except discord.Forbidden:
+                await interaction.followup.send("❌ I don't have permission to delete messages in this channel.", ephemeral=True)
+            except Exception as e:
+                await interaction.followup.send(f"❌ An error occurred: `{e}`", ephemeral=True)
+
