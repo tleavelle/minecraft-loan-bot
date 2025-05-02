@@ -225,3 +225,27 @@ def setup_commands(bot: commands.Bot):
         except Exception as e:
             await interaction.followup.send(f"❌ An error occurred: `{e}`", ephemeral=True)
 
+    @tree.command(name="resetloans", description="(Admin) WIPE all active loans and repayments", guild=discord.Object(id=GUILD_ID))
+    async def resetloans(interaction: discord.Interaction, confirm: bool):
+        if interaction.user.id != OWNER_ID:
+            await interaction.response.send_message("🚫 You don’t have permission to use this command.", ephemeral=True)
+            return
+
+        if not confirm:
+            await interaction.response.send_message("⚠️ You must confirm by setting `confirm=true`.", ephemeral=True)
+            return
+
+        from db import get_connection
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("DELETE FROM repayments")
+            cursor.execute("DELETE FROM loans")
+            cursor.execute("DELETE FROM sqlite_sequence WHERE name='loans'")
+            conn.commit()
+            await interaction.response.send_message("🔥 All active loans and repayments wiped. Loan ID counter reset.", ephemeral=True)
+        except Exception as e:
+            await interaction.response.send_message(f"❌ Failed to wipe data: `{e}`", ephemeral=True)
+        finally:
+            conn.close()

@@ -6,6 +6,7 @@ cursor = conn.cursor()
 
 cursor.execute("DELETE FROM repayments")
 cursor.execute("DELETE FROM loans")
+cursor.execute("DELETE FROM sqlite_sequence WHERE name='loans'")
 
 conn.commit()
 conn.close()
