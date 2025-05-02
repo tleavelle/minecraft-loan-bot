@@ -140,3 +140,57 @@ def setup_commands(bot: commands.Bot):
     @tree.command(name="myid", description="Get your Discord user ID", guild=discord.Object(id=GUILD_ID))
     async def myid(interaction: discord.Interaction):
         await interaction.response.send_message(f"Your Discord ID is `{interaction.user.id}`", ephemeral=True)
+
+    @tree.command(name="help", description="Show available loan commands", guild=discord.Object(id=GUILD_ID))
+    async def help(interaction: discord.Interaction):
+        if not channel_guard(interaction):
+            await interaction.response.send_message("🚫 You can’t use that command here.", ephemeral=True)
+            return
+
+        embed = discord.Embed(
+            title="💼 LoanBot Help Menu",
+            description="Here are the available slash commands you can use:",
+            color=discord.Color.gold()
+        )
+        embed.add_field(
+            name="/apply `<amount>`",
+            value="Request a new diamond loan.\nExample: `/apply 32`",
+            inline=False
+        )
+        embed.add_field(
+            name="/repay `<loan_id>` `<amount>`",
+            value="Make a payment toward an active loan.\nExample: `/repay 3 16`",
+            inline=False
+        )
+        embed.add_field(
+            name="/status",
+            value="Check the status of your active loans.",
+            inline=False
+        )
+        embed.add_field(
+            name="/myid",
+            value="Get your Discord user ID (used for linking).",
+            inline=False
+        )
+        embed.add_field(
+            name="/loaninfo `<loan_id>`",
+            value="(Admin) View details for a specific loan.",
+            inline=False
+        )
+        embed.add_field(
+            name="/checkoverdue",
+            value="(Admin) Show all overdue loans.",
+            inline=False
+        )
+        embed.add_field(
+            name="/linkuser `<@user>` `<ign>`",
+            value="(Admin) Link a Discord user to a Minecraft IGN.",
+            inline=False
+        )
+        embed.add_field(
+            name="/unlinkuser `<@user>`",
+            value="(Admin) Remove a user’s linked IGN.",
+            inline=False
+        )
+
+        await interaction.response.send_message(embed=embed, ephemeral=True)

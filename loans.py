@@ -73,16 +73,17 @@ def get_loan_status(mc_ign: str) -> str:
     msg = f"📊 Loan summary for `{mc_ign}`:\n"
     for i, loan in enumerate(loans, 1):
         loan_amt, repaid, total, due = loan
-        remaining = total - repaid
+        remaining = math.ceil(total - repaid)
         msg += (
             f"\n**Loan {i}:**\n"
-            f"> Principal: {loan_amt} 💎\n"
-            f"> Repaid: {repaid} 💎\n"
-            f"> Total Owed: {total} 💎\n"
-            f"> Remaining: {remaining:.2f} 💎\n"
+            f"> Principal: {int(loan_amt)} 💎\n"
+            f"> Repaid: {int(repaid)} 💎\n"
+            f"> Total Owed: {int(total)} 💎\n"
+            f"> Remaining: {remaining} 💎\n"
             f"> Due: {due}\n"
         )
     return msg
+
 
 
 def repay_loan(mc_ign: str, loan_id: int, amount: float) -> str:
@@ -102,9 +103,13 @@ def repay_loan(mc_ign: str, loan_id: int, amount: float) -> str:
         conn.close()
         return f"✅ Loan #{loan_id} is already fully repaid."
 
+    if not amount.is_integer():
+        conn.close()
+        return "❌ You must repay whole diamonds only. No fractions allowed."
+
     if amount > remaining:
         conn.close()
-        return f"⚠️ You only owe {remaining:.2f} diamonds."
+        return f"❌ Overpayment not allowed. You only owe {remaining:.2f} diamonds."
 
     cursor.execute("UPDATE loans SET amount_repaid = amount_repaid + ? WHERE id = ?", (amount, loan_id))
     cursor.execute("INSERT INTO repayments (loan_id, amount, date) VALUES (?, ?, ?)",
@@ -113,6 +118,8 @@ def repay_loan(mc_ign: str, loan_id: int, amount: float) -> str:
 
     cursor.execute("SELECT amount_repaid, total_owed FROM loans WHERE id = ?", (loan_id,))
     repaid, total = cursor.fetchone()
+    remaining_after = total - repaid
+
     if math.ceil(repaid) >= total:
         cursor.execute('''
             INSERT INTO loan_archive (id, player_name, loan_amount, date_borrowed, due_date, date_repaid)
@@ -125,7 +132,8 @@ def repay_loan(mc_ign: str, loan_id: int, amount: float) -> str:
         return f"✅ Loan #{loan_id} fully repaid and archived. You're free as a bat in the End!"
 
     conn.close()
-    return f"💸 Payment of {amount} diamonds received for Loan #{loan_id}.\nRemaining balance: {total - repaid:.2f} 💎. Due: {due_date}."
+    return f"💸 Payment of {int(amount)} diamonds received for Loan #{loan_id}.\nRemaining balance: {remaining_after:.2f} 💎. Due: {due_date}."
+
 
 
 def get_overdue_loans():
