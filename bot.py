@@ -21,15 +21,20 @@ tree = bot.tree
 async def on_ready():
     print(f"🤖 Logged in as {bot.user}")
     initialize_db()
+
     try:
         guild = discord.Object(id=GUILD_ID)
-        await tree.clear_commands(guild=guild)
         setup_commands(bot)
+
         synced = await tree.sync(guild=guild)
         print(f"✅ Synced {len(synced)} commands to guild {GUILD_ID}")
     except Exception as e:
-        print(f"❌ Sync failed: {e}")
+        import traceback
+        print("❌ Sync failed:")
+        traceback.print_exc()
+
     daily_overdue_check.start()
+
 
 @tasks.loop(hours=24)
 async def daily_overdue_check():
