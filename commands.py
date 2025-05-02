@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-from config import OWNER_ID, ALLOWED_CHANNELS
+from config import OWNER_ID, ALLOWED_CHANNELS, GUILD_ID
 from igns import load_igns
 from users import link_user, unlink_user, get_user_ign
 from loans import apply_for_loan, repay_loan, get_loan_status, get_overdue_loans, get_loan_details_by_id
@@ -16,7 +16,7 @@ def channel_guard(interaction: discord.Interaction) -> bool:
 def setup_commands(bot: commands.Bot):
     tree = bot.tree
 
-    @tree.command(name="linkuser", description="Link a Discord user to a Minecraft IGN (Admin Only)")
+    @tree.command(name="linkuser", description="Link a Discord user to a Minecraft IGN (Admin Only)", guild=discord.Object(id=GUILD_ID))
     async def linkuser(interaction: discord.Interaction, user: discord.Member, ign: str):
         if interaction.user.id != OWNER_ID:
             await interaction.response.send_message("🚫 You don’t have permission to use this command.", ephemeral=True)
@@ -27,7 +27,7 @@ def setup_commands(bot: commands.Bot):
         result = link_user(user.id, ign.strip())
         await interaction.response.send_message(result, ephemeral=True)
 
-    @tree.command(name="unlinkuser", description="Unlink a Discord user from their IGN (Admin Only)")
+    @tree.command(name="unlinkuser", description="Unlink a Discord user from their IGN (Admin Only)", guild=discord.Object(id=GUILD_ID))
     async def unlinkuser(interaction: discord.Interaction, user: discord.Member):
         if interaction.user.id != OWNER_ID:
             await interaction.response.send_message("🚫 You don’t have permission to use this command.", ephemeral=True)
@@ -35,7 +35,7 @@ def setup_commands(bot: commands.Bot):
         result = unlink_user(user.id)
         await interaction.response.send_message(result, ephemeral=True)
 
-    @tree.command(name="apply", description="Apply for a diamond loan")
+    @tree.command(name="apply", description="Apply for a diamond loan", guild=discord.Object(id=GUILD_ID))
     async def apply(interaction: discord.Interaction, amount: int):
         if not channel_guard(interaction):
             await interaction.response.send_message("🚫 You can’t use that command here.", ephemeral=True)
@@ -62,7 +62,7 @@ def setup_commands(bot: commands.Bot):
             except discord.Forbidden:
                 await interaction.followup.send("⚠️ Could not send loan agreement via DM.", ephemeral=True)
 
-    @tree.command(name="repay", description="Repay a loan")
+    @tree.command(name="repay", description="Repay a loan", guild=discord.Object(id=GUILD_ID))
     async def repay(interaction: discord.Interaction, loan_id: int, amount: float):
         if not channel_guard(interaction):
             await interaction.response.send_message("🚫 You can’t use that command here.", ephemeral=True)
@@ -81,7 +81,7 @@ def setup_commands(bot: commands.Bot):
         await interaction.response.send_message(embed=embed)
         await log_transaction(bot, "Repayment", interaction.user, f"{mc_ign} repaid {amount} diamonds toward Loan #{loan_id}.")
 
-    @tree.command(name="status", description="View your active loans")
+    @tree.command(name="status", description="View your active loans", guild=discord.Object(id=GUILD_ID))
     async def status(interaction: discord.Interaction):
         if not channel_guard(interaction):
             await interaction.response.send_message("🚫 You can’t use that command here.", ephemeral=True)
@@ -99,7 +99,7 @@ def setup_commands(bot: commands.Bot):
         )
         await interaction.response.send_message(embed=embed)
 
-    @tree.command(name="loaninfo", description="Admin: Get info about a specific loan ID")
+    @tree.command(name="loaninfo", description="Admin: Get info about a specific loan ID", guild=discord.Object(id=GUILD_ID))
     async def loaninfo(interaction: discord.Interaction, loan_id: int):
         if interaction.user.id != OWNER_ID:
             await interaction.response.send_message("🚫 You don’t have permission to use this command.", ephemeral=True)
@@ -107,7 +107,7 @@ def setup_commands(bot: commands.Bot):
         result = get_loan_details_by_id(loan_id)
         await interaction.response.send_message(result, ephemeral=True)
 
-    @tree.command(name="checkoverdue", description="Check for overdue loans (Admin Only)")
+    @tree.command(name="checkoverdue", description="Check for overdue loans (Admin Only)", guild=discord.Object(id=GUILD_ID))
     async def checkoverdue(interaction: discord.Interaction):
         if not channel_guard(interaction):
             await interaction.response.send_message("🚫 You can’t use that command here.", ephemeral=True)
@@ -137,6 +137,6 @@ def setup_commands(bot: commands.Bot):
         for loan_id, player_name, due_date in overdue:
             await log_transaction(bot, "Overdue Loan", interaction.user, f"Loan #{loan_id} for {player_name} overdue since {due_date}.")
 
-    @tree.command(name="myid", description="Get your Discord user ID")
+    @tree.command(name="myid", description="Get your Discord user ID", guild=discord.Object(id=GUILD_ID))
     async def myid(interaction: discord.Interaction):
         await interaction.response.send_message(f"Your Discord ID is `{interaction.user.id}`", ephemeral=True)
