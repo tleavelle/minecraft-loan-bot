@@ -67,11 +67,20 @@ def setup_commands(bot: commands.Bot):
         if not channel_guard(interaction):
             await interaction.response.send_message("🚫 You can’t use that command here.", ephemeral=True)
             return
+
         mc_ign = get_user_ign(interaction.user.id)
         if not mc_ign:
             await interaction.response.send_message("⚠️ You're not linked. Ask the admin to run `/linkuser` for you.", ephemeral=True)
             return
+
         result = repay_loan(mc_ign, loan_id, amount)
+
+        if result.startswith("✅") or result.startswith("❌") or result.startswith("⚠️"):
+            # Show plain response if it's an error or final status
+            await interaction.response.send_message(result, ephemeral=True)
+            return
+
+        # Otherwise, assume it's a valid partial repayment and use styled embed
         embed = discord.Embed(
             title="💸 Payment Received!",
             description=result,
@@ -80,6 +89,7 @@ def setup_commands(bot: commands.Bot):
         )
         await interaction.response.send_message(embed=embed)
         await log_transaction(bot, "Repayment", interaction.user, f"{mc_ign} repaid {amount} diamonds toward Loan #{loan_id}.")
+
 
     @tree.command(name="status", description="View your active loans", guild=discord.Object(id=GUILD_ID))
     async def status(interaction: discord.Interaction):
