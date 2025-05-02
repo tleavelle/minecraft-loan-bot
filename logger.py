@@ -1,3 +1,5 @@
+# logger.py
+
 import os
 import discord
 from datetime import datetime
@@ -12,26 +14,23 @@ async def log_transaction(bot, action: str, user: discord.User, details: str):
     """Logs a transaction to a file and optionally to a Discord channel."""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     user_tag = f"{user.name}#{user.discriminator}"
-
     log_entry = f"[{timestamp}] {action} | {user_tag} | {details}\n"
 
     # Write to local log file
     with open(LOG_FILE_PATH, "a") as f:
         f.write(log_entry)
 
-    # If LOG_CHANNEL_ID is set, send it as a Discord message
+    # Also send to Discord log channel, if configured
     if LOG_CHANNEL_ID:
-        try:
-            channel = bot.get_channel(LOG_CHANNEL_ID)
-            if channel:
-                embed = discord.Embed(
-                    title=f"📜 {action}",
-                    description=f"**User:** {user.mention}\n**Details:** {details}",
-                    color=discord.Color.blue(),
-                    timestamp=datetime.now()
-                )
-                embed.set_footer(text=f"Action: {action}")
+        channel = bot.get_channel(LOG_CHANNEL_ID)
+        if channel:
+            embed = discord.Embed(
+                title=f"📜 {action}",
+                description=f"**User:** {user.mention}\n**Details:** {details}",
+                color=discord.Color.blue(),
+                timestamp=datetime.now()
+            )
+            try:
                 await channel.send(embed=embed)
-        except Exception as e:
-            print(f"Failed to log to Discord channel: {e}")
-
+            except Exception as e:
+                print(f"❌ Failed to send log to Discord: {e}")

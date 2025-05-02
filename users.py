@@ -12,11 +12,10 @@ def link_user(discord_id: int, mc_ign: str) -> str:
     conn = get_connection()
     cursor = conn.cursor()
 
-    # Check if IGN or Discord ID already linked
+    # Check if Discord ID or IGN is already linked
     cursor.execute("SELECT * FROM linked_users WHERE discord_id = ? OR mc_ign = ?", (str(discord_id), mc_ign))
-    existing = cursor.fetchone()
-
-    if existing:
+    if cursor.fetchone():
+        conn.close()
         return "⚠️ That Discord user or IGN is already linked."
 
     cursor.execute("INSERT INTO linked_users (discord_id, mc_ign) VALUES (?, ?)", (str(discord_id), mc_ign))
@@ -24,24 +23,18 @@ def link_user(discord_id: int, mc_ign: str) -> str:
     conn.close()
     return f"✅ Linked <@{discord_id}> to `{mc_ign}` successfully."
 
-
 def unlink_user(discord_id: int) -> str:
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT mc_ign FROM linked_users WHERE discord_id = ?", (str(discord_id),))
-    row = cursor.fetchone()
-
-    if not row:
-        conn.close()
-        return "⚠️ This user is not linked to any IGN."
-
-    mc_ign = row[0]
     cursor.execute("DELETE FROM linked_users WHERE discord_id = ?", (str(discord_id),))
+    deleted = cursor.rowcount
     conn.commit()
     conn.close()
 
-    return f"✅ Unlinked <@{discord_id}> from `{mc_ign}`."
-    
+    if deleted:
+        return f"✅ Unlinked <@{discord_id}>."
+    else:
+        return f"⚠️ No link found for <@{discord_id}>."
 
 def get_user_ign(discord_id: int) -> Optional[str]:
     conn = get_connection()

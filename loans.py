@@ -1,3 +1,5 @@
+# loans.py
+
 import math
 import os
 from datetime import datetime, timedelta
@@ -30,28 +32,28 @@ def apply_for_loan(mc_ign: str, amount: int) -> tuple[int | None, str, str | Non
     os.makedirs(agreements_dir, exist_ok=True)
     agreement_path = os.path.join(agreements_dir, f"Loan_Agreement_{mc_ign}_{loan_id}.txt")
 
-    agreement_text = (
-        "=== Minecraft Diamond Loan Agreement ===\n"
-        f"Loan ID: {loan_id}\n"
-        f"Player: {mc_ign}\n"
-        f"Date of Agreement: {date_borrowed}\n"
-        f"Loan Amount (Principal): {amount} diamonds\n"
-        f"Flat Fee (5%): {fee:.2f} diamonds\n"
-        f"Total Owed: {total_owed} diamonds\n"
-        f"Due Date: {due_date}\n\n"
-        "--- Terms & Conditions ---\n"
-        "Repayment must be made in full before the due date.\n"
-        "Partial diamonds are not accepted. No exceptions.\n\n"
-        "Failure to repay may result in:\n"
-        "- Repossession of diamond-based assets\n"
-        "- Confiscation of enchanted tools\n"
-        "- Public shaming via server-wide announcements\n\n"
-        "Signature: ___________________________\n"
-        "Bank Representative: The Vaultkeeper\n"
-    )
-
     with open(agreement_path, "w") as file:
-        file.write(agreement_text)
+        file.write(f"""=== Minecraft Diamond Loan Agreement ===
+Loan ID: {loan_id}
+Player: {mc_ign}
+Date of Agreement: {date_borrowed}
+Loan Amount (Principal): {amount} diamonds
+Flat Fee (5%): {fee:.2f} diamonds
+Total Owed: {total_owed} diamonds
+Due Date: {due_date}
+
+--- Terms & Conditions ---
+Repayment must be made in full before the due date.
+Partial diamonds are not accepted. No exceptions.
+
+Failure to repay may result in:
+- Repossession of diamond-based assets
+- Confiscation of enchanted tools
+- Public shaming via server-wide announcements
+
+Signature: ___________________________
+Bank Representative: The Vaultkeeper
+""")
 
     conn.close()
     summary = f"✅ `{mc_ign}` has borrowed {amount} diamonds. Total owed: {total_owed} 💎. Due: {due_date}."
@@ -127,23 +129,18 @@ def repay_loan(mc_ign: str, loan_id: int, amount: float) -> str:
 
 
 def get_overdue_loans():
-    """Returns a list of (loan_id, player_name, due_date) for overdue loans."""
     conn = get_connection()
     cursor = conn.cursor()
-
     today = datetime.now().strftime("%Y-%m-%d")
     cursor.execute("SELECT id, player_name, due_date FROM loans WHERE due_date < ?", (today,))
     overdue_loans = cursor.fetchall()
-
     conn.close()
     return overdue_loans
 
 
 def get_loan_details_by_id(loan_id: int) -> str:
-    """Returns a formatted summary of a specific loan."""
     conn = get_connection()
     cursor = conn.cursor()
-
     cursor.execute("SELECT player_name, loan_amount, fee, total_owed, amount_repaid, date_borrowed, due_date FROM loans WHERE id = ?", (loan_id,))
     loan = cursor.fetchone()
     conn.close()
