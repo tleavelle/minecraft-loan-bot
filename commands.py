@@ -211,7 +211,7 @@ def setup_commands(bot: commands.Bot):
                 await interaction.response.send_message("🚫 You don’t have permission to use this command.", ephemeral=True)
                 return
 
-            if interaction.channel_id != 1366677117051605084:
+            if interaction.channel_id != (1366677117051605084, 1366685641827553321):
                 await interaction.response.send_message("⚠️ This command can only be used in the loan channel.", ephemeral=True)
                 return
 
