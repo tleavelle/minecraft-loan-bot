@@ -205,25 +205,7 @@ def setup_commands(bot: commands.Bot):
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-    @tree.command(name="clearchat", description="(Admin) Clear all messages in the loan channel", guild=discord.Object(id=GUILD_ID))
-    async def clearchat(interaction: discord.Interaction):
-        if interaction.user.id != OWNER_ID:
-            await interaction.response.send_message("🚫 You don’t have permission to use this command.", ephemeral=True)
-            return
-
-        if interaction.channel_id not in (1366673826745684062, 1366685641827553321): 
-            await interaction.response.send_message("⚠️ This command can only be used in the loan channel.", ephemeral=True)
-            return
-
-        await interaction.response.defer(ephemeral=True)
-
-        try:
-            deleted = await interaction.channel.purge(limit=100, bulk=True)
-            await interaction.followup.send(f"🧹 Cleared {len(deleted)} messages from this channel.", ephemeral=True)
-        except discord.Forbidden:
-            await interaction.followup.send("❌ I don't have permission to delete messages in this channel.", ephemeral=True)
-        except Exception as e:
-            await interaction.followup.send(f"❌ An error occurred: `{e}`", ephemeral=True)
+    
 
     @tree.command(name="resetloans", description="(Admin) WIPE all active loans and repayments", guild=discord.Object(id=GUILD_ID))
     async def resetloans(interaction: discord.Interaction, confirm: bool):
@@ -249,5 +231,33 @@ def setup_commands(bot: commands.Bot):
             await interaction.response.send_message(f"❌ Failed to wipe data: `{e}`", ephemeral=True)
         finally:
             conn.close()
+
+    @tree.command(name="resync", description="(Admin) Force resync all bot commands.", guild=discord.Object(id=GUILD_ID))
+    async def resync(interaction: discord.Interaction):
+        # Only allow the bot owner (you) to run this
+        if interaction.user.id != 242324611365208065:
+            await interaction.response.send_message("❌ You don’t have permission to use this command.", ephemeral=True)
+            return
+
+        await interaction.response.defer(ephemeral=True)
+
+        try:
+            guild = interaction.guild
+
+            # Clear and resync guild commands
+            tree.clear_commands(guild=discord.Object(id=guild.id))
+            synced = await tree.sync(guild=guild)
+            msg = f"🔄 Resynced {len(synced)} guild commands in **{guild.name}**."
+
+            # Optionally also clear global commands
+            # tree.clear_commands()
+            # global_synced = await tree.sync()
+            # msg += f"\n🌐 Resynced {len(global_synced)} global commands."
+
+            await interaction.followup.send(msg, ephemeral=True)
+
+        except Exception as e:
+            await interaction.followup.send(f"❌ Resync failed: `{e}`", ephemeral=True)
+
 
     
