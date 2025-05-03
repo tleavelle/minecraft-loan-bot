@@ -250,42 +250,4 @@ def setup_commands(bot: commands.Bot):
         finally:
             conn.close()
 
-    @tree.command(name="rules", description="View the server rules", guild=discord.Object(id=GUILD_ID))
-    async def rules(interaction: discord.Interaction):
-        if not channel_guard(interaction):
-            await interaction.response.send_message("🚫 You can’t use that command here.", ephemeral=True)
-            return
-
-        embed = discord.Embed(
-            title="📜 Server Rules",
-            description="Please follow these rules to keep the community friendly and fun.",
-            color=discord.Color.orange()
-        )
-        embed.add_field(
-            name="1️⃣ Be respectful",
-            value="Treat everyone with kindness — harassment and toxicity will not be tolerated.",
-            inline=False
-        )
-        embed.add_field(
-            name="2️⃣ No spam or self-promotion",
-            value="No advertising, link spam, or Discord invites.",
-            inline=False
-        )
-        embed.add_field(
-            name="3️⃣ No griefing or looting",
-            value="Don't destroy or steal from other players' builds or active bases.",
-            inline=False
-        )
-        embed.add_field(
-            name="4️⃣ No cheating or hacking",
-            value="This includes x-ray mods, hacked clients, and exploit abuse.",
-            inline=False
-        )
-        embed.add_field(
-            name="5️⃣ Be redstone-smart",
-            value="Build farms responsibly. Avoid lag-inducing contraptions that hurt server performance.",
-            inline=False
-        )
-
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
+    
