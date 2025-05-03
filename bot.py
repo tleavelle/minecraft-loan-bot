@@ -29,8 +29,8 @@ async def on_ready():
         # Register fresh commands AFTER login
         setup_commands(bot)
 
-        # Optional: Clear existing commands if needed
-        # await tree.clear_commands(guild=guild)
+        # 👇 This line clears all old guild-specific commands
+        await tree.clear_commands(guild=guild)
 
         synced = await tree.sync(guild=guild)
         print(f"✅ Synced {len(synced)} commands to guild {GUILD_ID}")
@@ -40,6 +40,7 @@ async def on_ready():
         print(f"❌ Command sync failed: {e}")
 
     daily_overdue_check.start()
+
 
 @tasks.loop(hours=24)
 async def daily_overdue_check():
