@@ -26,11 +26,12 @@ async def on_ready():
     try:
         guild = discord.Object(id=GUILD_ID)
 
+        # 👇 This line clears all old guild-specific commands
+        await tree.clear_commands(guild=guild)
         # Register fresh commands AFTER login
         setup_commands(bot)
 
-        # 👇 This line clears all old guild-specific commands
-        await tree.clear_commands(guild=guild)
+        
 
         synced = await tree.sync(guild=guild)
         print(f"✅ Synced {len(synced)} commands to guild {GUILD_ID}")
